@@ -88,11 +88,45 @@ export default function () {
     return mesh;
   };
 
+  const createStar = (count = 500) => {
+    const positions = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 3;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 3;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 3;
+    }
+
+    const particleGeometry = new THREE.BufferGeometry();
+
+    particleGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, 3)
+    );
+
+    const particleMaterial = new THREE.PointsMaterial({
+      size: 0.01,
+      transparent: true,
+      map: textureLoader.load("assets/particle.png"),
+      alphaMap: textureLoader.load("assets/particle.png"),
+      depthWrite: false,
+      color: 0xbcc6c6,
+    });
+
+    const star = new THREE.Points(particleGeometry, particleMaterial);
+
+    return star;
+  };
+
   const create = () => {
     const earth1 = createEarth1();
     const earth2 = createEarth2();
 
-    scene.add(earth1, earth2);
+    const star = createStar();
+
+    scene.add(earth1, earth2, star);
+
+    return { earth1, earth2, star };
   };
 
   const resize = () => {
@@ -110,20 +144,31 @@ export default function () {
     window.addEventListener("resize", resize);
   };
 
-  const draw = () => {
+  const draw = (obj) => {
+    const { earth1, earth2, star } = obj;
+
+    earth1.rotation.x += 0.0005;
+    earth1.rotation.y += 0.0005;
+
+    earth2.rotation.x += 0.0005;
+    earth2.rotation.y += 0.0005;
+
+    star.rotation.x += 0.001;
+    star.rotation.y += 0.001;
+
     controls.update();
     renderer.render(scene, camera);
     requestAnimationFrame(() => {
-      draw();
+      draw(obj);
     });
   };
 
   const initialize = () => {
     addLight();
-    create();
+    const obj = create();
     addEvent();
     resize();
-    draw();
+    draw(obj);
   };
 
   initialize();
