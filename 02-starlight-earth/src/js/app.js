@@ -1,12 +1,16 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
   });
 
-  const container = document.querySelector('#container');
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const textureLoader = new THREE.TextureLoader();
+
+  const container = document.querySelector("#container");
 
   container.appendChild(renderer.domElement);
 
@@ -28,9 +32,21 @@ export default function () {
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
 
-  const createObject = () => {
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const geometry = new THREE.PlaneGeometry(1, 1);
+  const addLight = () => {
+    const light = new THREE.DirectionalLight(0xffffff); // 방향이 있는 빛
+
+    light.position.set(0.65, 2.13, 1.02);
+
+    scene.add(light);
+  };
+
+  const createEarth1 = () => {
+    const material = new THREE.MeshStandardMaterial({
+      map: textureLoader.load("assets/earth_nightmap.jpg"),
+    });
+
+    const geometry = new THREE.SphereGeometry(1.3, 30, 30);
+
     const mesh = new THREE.Mesh(geometry, material);
 
     scene.add(mesh);
@@ -48,7 +64,7 @@ export default function () {
   };
 
   const addEvent = () => {
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
   };
 
   const draw = () => {
@@ -60,7 +76,8 @@ export default function () {
   };
 
   const initialize = () => {
-    createObject();
+    addLight();
+    createEarth1();
     addEvent();
     resize();
     draw();
