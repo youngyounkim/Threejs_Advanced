@@ -159,6 +159,16 @@ export default function () {
     return mesh;
   };
 
+  const createCurve = (pos1, pos2) => {
+    const curve = new THREE.CatmullRomCurve3([pos1, pos2]);
+    const geometry = new THREE.TubeGeometry(curve, 20, 0.01);
+
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    return mesh;
+  };
+
   const create = () => {
     const earth1 = createEarth1();
     const earth2 = createEarth2();
@@ -166,7 +176,9 @@ export default function () {
     const star = createStar();
     const point1 = createPoint1();
     const point2 = createPoint2();
-    scene.add(earth1, earth2, star, point1, point2);
+    const curve = createCurve(point1.position, point2.position);
+
+    scene.add(earth1, earth2, star, point1, point2, curve);
 
     return { earth1, earth2, star };
   };
