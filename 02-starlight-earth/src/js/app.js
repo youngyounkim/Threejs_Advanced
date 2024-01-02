@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { convertLatingTopPos } from "./utils";
+import { convertLatingTopPos, getGradientCanvas } from "./utils";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
@@ -130,13 +130,14 @@ export default function () {
     };
 
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.03, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+      new THREE.TorusGeometry(0.02, 0.002, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0x263d64 })
     );
 
     const position = convertLatingTopPos(point, 1.3);
 
     mesh.position.set(position.x, position.y, position.z);
+    mesh.rotation.set(0.9, 2.46, 1);
 
     return mesh;
   };
@@ -148,8 +149,8 @@ export default function () {
     };
 
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.03, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+      new THREE.TorusGeometry(0.02, 0.002, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0x263d64 })
     );
 
     const position = convertLatingTopPos(point, 1.3);
@@ -160,16 +161,36 @@ export default function () {
   };
 
   const createCurve = (pos1, pos2) => {
-    const curve = new THREE.CatmullRomCurve3([pos1, pos2]);
-    const geometry = new THREE.TubeGeometry(curve, 20, 0.01);
+    const points = [];
 
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    for (let i = 0; i <= 100; i++) {
+      const pos = new THREE.Vector3().lerpVectors(pos1, pos2, i / 100);
+
+      pos.normalize();
+
+      const wave = Math.sin((Math.PI * i) / 100);
+
+      pos.multiplyScalar(1.3 + 0.4 * wave);
+
+      points.push(pos);
+    }
+
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geometry = new THREE.TubeGeometry(curve, 20, 0.003);
+
+    const gradientCanvas = getGradientCanvas("#757f94", "#263d74");
+
+    const texture = new THREE.CanvasTexture(gradientCanvas);
+
+    const material = new THREE.MeshBasicMaterial({ map: texture });
     const mesh = new THREE.Mesh(geometry, material);
 
     return mesh;
   };
 
   const create = () => {
+    const earthGroup = new THREE.Group();
+
     const earth1 = createEarth1();
     const earth2 = createEarth2();
 
@@ -178,9 +199,11 @@ export default function () {
     const point2 = createPoint2();
     const curve = createCurve(point1.position, point2.position);
 
-    scene.add(earth1, earth2, star, point1, point2, curve);
+    earthGroup.add(earth1, earth2, point1, point2, curve);
 
-    return { earth1, earth2, star };
+    scene.add(earthGroup, star);
+
+    return { earthGroup, star };
   };
 
   const resize = () => {
@@ -199,16 +222,13 @@ export default function () {
   };
 
   const draw = (obj) => {
-    const { earth1, earth2, star } = obj;
+    const { earthGroup, star } = obj;
 
-    // earth1.rotation.x += 0.0005;
-    // earth1.rotation.y += 0.0005;
+    earthGroup.rotation.x += 0.0005;
+    earthGroup.rotation.y += 0.0005;
 
-    // earth2.rotation.x += 0.0005;
-    // earth2.rotation.y += 0.0005;
-
-    // star.rotation.x += 0.001;
-    // star.rotation.y += 0.001;
+    star.rotation.x += 0.001;
+    star.rotation.y += 0.001;
 
     controls.update();
     renderer.render(scene, camera);
