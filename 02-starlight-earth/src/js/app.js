@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { convertLatingTopPos } from "./utils";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
@@ -70,6 +71,8 @@ export default function () {
 
     const mesh = new THREE.Mesh(geometry, material);
 
+    mesh.rotation.y = -Math.PI / 2;
+
     return mesh;
   };
 
@@ -84,6 +87,8 @@ export default function () {
     const geometry = new THREE.SphereGeometry(1.5, 30, 30);
 
     const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.rotation.y = -Math.PI / 2;
 
     return mesh;
   };
@@ -118,16 +123,38 @@ export default function () {
     return star;
   };
 
-  const createPoint = () => {
+  const createPoint1 = () => {
     const point = {
       lat: 37.56668 * (Math.PI / 180),
       lng: 126.97841 * (Math.PI / 180),
     };
 
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1, 20, 20),
+      new THREE.SphereGeometry(0.03, 20, 20),
       new THREE.MeshBasicMaterial({ color: 0xff0000 })
     );
+
+    const position = convertLatingTopPos(point, 1.3);
+
+    mesh.position.set(position.x, position.y, position.z);
+
+    return mesh;
+  };
+
+  const createPoint2 = () => {
+    const point = {
+      lat: 5.55363 * (Math.PI / 180),
+      lng: -0.196481 * (Math.PI / 180),
+    };
+
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.03, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    );
+
+    const position = convertLatingTopPos(point, 1.3);
+
+    mesh.position.set(position.x, position.y, position.z);
 
     return mesh;
   };
@@ -137,9 +164,9 @@ export default function () {
     const earth2 = createEarth2();
 
     const star = createStar();
-    const point = createPoint();
-
-    scene.add(earth1, earth2, star, point);
+    const point1 = createPoint1();
+    const point2 = createPoint2();
+    scene.add(earth1, earth2, star, point1, point2);
 
     return { earth1, earth2, star };
   };
