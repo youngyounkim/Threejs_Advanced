@@ -118,13 +118,28 @@ export default function () {
     return star;
   };
 
+  const createPoint = () => {
+    const point = {
+      lat: 37.56668 * (Math.PI / 180),
+      lng: 126.97841 * (Math.PI / 180),
+    };
+
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    );
+
+    return mesh;
+  };
+
   const create = () => {
     const earth1 = createEarth1();
     const earth2 = createEarth2();
 
     const star = createStar();
+    const point = createPoint();
 
-    scene.add(earth1, earth2, star);
+    scene.add(earth1, earth2, star, point);
 
     return { earth1, earth2, star };
   };
@@ -147,14 +162,14 @@ export default function () {
   const draw = (obj) => {
     const { earth1, earth2, star } = obj;
 
-    earth1.rotation.x += 0.0005;
-    earth1.rotation.y += 0.0005;
+    // earth1.rotation.x += 0.0005;
+    // earth1.rotation.y += 0.0005;
 
-    earth2.rotation.x += 0.0005;
-    earth2.rotation.y += 0.0005;
+    // earth2.rotation.x += 0.0005;
+    // earth2.rotation.y += 0.0005;
 
-    star.rotation.x += 0.001;
-    star.rotation.y += 0.001;
+    // star.rotation.x += 0.001;
+    // star.rotation.y += 0.001;
 
     controls.update();
     renderer.render(scene, camera);
