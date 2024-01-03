@@ -22,6 +22,8 @@ export default function () {
     height: window.innerHeight,
   };
 
+  const clock = new THREE.Clock();
+
   renderer.outputEncoding = THREE.sRGBEncoding;
 
   const renderTarget = new THREE.WebGLRenderTarget(
@@ -84,25 +86,25 @@ export default function () {
     const renderPass = new RenderPass(scene, camera);
     effectComposer.addPass(renderPass);
 
-    const filmPass = new FilmPass(1, 1, 4096, false);
-    // effectComposer.addPass(filmPass);
+    const filmPass = new FilmPass(1, 1, 2000, false);
+    effectComposer.addPass(filmPass);
 
     const unrealBloomPass = new UnrealBloomPass(
       new THREE.Vector2(canvasSize.width, canvasSize.height)
     );
 
-    // unrealBloomPass.strength = 1;
-    // unrealBloomPass.threshold = 0.2;
-    // unrealBloomPass.radius = 1;
-    // effectComposer.addPass(unrealBloomPass);
+    unrealBloomPass.strength = 0.4;
+    unrealBloomPass.threshold = 0.2;
+    unrealBloomPass.radius = 0.7;
+    effectComposer.addPass(unrealBloomPass);
 
     const shaderPass = new ShaderPass(GammaCorrectionShader);
 
     const customShaderPass = new ShaderPass({
       uniforms: {
         uPosition: { value: new THREE.Vector2(0, 0) },
-        uBrightness: { value: 1 },
-        uColor: { value: new THREE.Vector3(0, 0, 0.3) },
+        uBrightness: { value: 0.3 },
+        uColor: { value: new THREE.Vector3(0, 0, 0.15) },
         uAlpah: { value: 0.5 },
         tDiffuse: { value: null },
       },
@@ -196,7 +198,7 @@ export default function () {
 
     const mesh = new THREE.Mesh(
       new THREE.TorusGeometry(0.02, 0.002, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0x263d64 })
+      new THREE.MeshBasicMaterial({ color: 0x263d64, transparent: true })
     );
 
     const position = convertLatingTopPos(point, 1.3);
@@ -215,7 +217,7 @@ export default function () {
 
     const mesh = new THREE.Mesh(
       new THREE.TorusGeometry(0.02, 0.002, 20, 20),
-      new THREE.MeshBasicMaterial({ color: 0x263d64 })
+      new THREE.MeshBasicMaterial({ color: 0x263d64, transparent: true })
     );
 
     const position = convertLatingTopPos(point, 1.3);
@@ -247,7 +249,10 @@ export default function () {
 
     const texture = new THREE.CanvasTexture(gradientCanvas);
 
-    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+    });
     const mesh = new THREE.Mesh(geometry, material);
 
     return mesh;
@@ -268,7 +273,7 @@ export default function () {
 
     scene.add(earthGroup, star);
 
-    return { earthGroup, star };
+    return { earthGroup, point1, point2, star, curve };
   };
 
   const resize = () => {
@@ -288,7 +293,7 @@ export default function () {
   };
 
   const draw = (obj) => {
-    const { earthGroup, star } = obj;
+    const { earthGroup, star, curve, point1, point2 } = obj;
 
     earthGroup.rotation.x += 0.0005;
     earthGroup.rotation.y += 0.0005;
@@ -298,6 +303,24 @@ export default function () {
 
     controls.update();
     effectComposer.render();
+
+    const timeElampsed = clock.getElapsedTime();
+
+    let drawRangeCount = curve.geometry.drawRange.count;
+
+    const progress = timeElampsed / 2.5;
+    const speed = 3;
+
+    drawRangeCount = progress * speed * 960;
+
+    curve.geometry.setDrawRange(0, drawRangeCount);
+
+    if (timeElampsed > 4) {
+      point1.material.opacity = 5 - timeElampsed;
+      point2.material.opacity = 5 - timeElampsed;
+      curve.material.opacity = 5 - timeElampsed;
+    }
+
     // renderer.render(scene, camera);
     requestAnimationFrame(() => {
       draw(obj);
