@@ -10,6 +10,8 @@ import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass";
 import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass";
 import { HalftonePass } from "three/examples/jsm/postprocessing/HalftonePass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
+import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
@@ -75,7 +77,9 @@ export default function () {
     scene.add(light);
   };
 
-  const addPostEffects = () => {
+  const addPostEffects = (obj) => {
+    const { earthGroup } = obj;
+
     const renderPass = new RenderPass(scene, camera);
     effectComposer.addPass(renderPass);
 
@@ -107,6 +111,21 @@ export default function () {
       blending: 1,
     });
     // effectComposer.addPass(halftonePass);
+
+    const outlinePass = new OutlinePass(
+      new THREE.Vector2(canvasSize.width, canvasSize.height),
+      scene,
+      camera
+    );
+    outlinePass.selectedObjects = [...earthGroup.children];
+    outlinePass.edgeStrength = 5;
+    outlinePass.edgeGlow = 2;
+    outlinePass.pulsePeriod = 5;
+
+    effectComposer.addPass(outlinePass);
+
+    const sMAAPass = new SMAAPass();
+    effectComposer.addPass(sMAAPass);
   };
 
   const createEarth1 = () => {
@@ -296,7 +315,7 @@ export default function () {
     addEvent();
     resize();
     draw(obj);
-    addPostEffects();
+    addPostEffects(obj);
   };
 
   initialize();
