@@ -6,12 +6,9 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
 import { GammaCorrectionShader } from "three/examples/jsm/shaders/GammaCorrectionShader";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
-import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass";
-import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass";
-import { HalftonePass } from "three/examples/jsm/postprocessing/HalftonePass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
 import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass";
+import dat from "dat.gui";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
@@ -69,6 +66,8 @@ export default function () {
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
 
+  const gui = new dat.GUI();
+
   const addLight = () => {
     const light = new THREE.DirectionalLight(0xffffff); // 방향이 있는 빛
 
@@ -86,12 +85,6 @@ export default function () {
     const filmPass = new FilmPass(1, 1, 4096, false);
     // effectComposer.addPass(filmPass);
 
-    const glitchPass = new GlitchPass();
-    // effectComposer.addPass(glitchPass);
-
-    const afterimagePass = new AfterimagePass(0.96);
-    // effectComposer.addPass(afterimagePass);
-
     const unrealBloomPass = new UnrealBloomPass(
       new THREE.Vector2(canvasSize.width, canvasSize.height)
     );
@@ -102,27 +95,46 @@ export default function () {
     // effectComposer.addPass(unrealBloomPass);
 
     const shaderPass = new ShaderPass(GammaCorrectionShader);
-    effectComposer.addPass(shaderPass);
 
-    const halftonePass = new HalftonePass(canvasSize.width, canvasSize.height, {
-      radius: 10,
-      shape: 1,
-      scatter: 0,
-      blending: 1,
+    const customShaderPass = new ShaderPass({
+      uniforms: {
+        uColor: { value: new THREE.Vector3(0, 0, 0.3) },
+        uAlpah: { value: 0.5 },
+        tDiffuse: { value: null },
+      },
+      vertexShader: `
+      varying vec2 vPosition;
+      varying vec2 vUv;
+
+      void main() {
+        gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+        vPosition = position.xy;
+        vUv = uv;
+      }
+      `,
+      fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uAlpah;
+      uniform sampler2D tDiffuse;
+
+      varying vec2 vPosition;
+      varying vec2 vUv;
+
+      void main() {
+        vec4 tex = texture2D(tDiffuse, vUv);    
+        tex.rgb += uColor;
+
+        gl_FragColor = tex;
+      }
+      `,
     });
-    // effectComposer.addPass(halftonePass);
 
-    const outlinePass = new OutlinePass(
-      new THREE.Vector2(canvasSize.width, canvasSize.height),
-      scene,
-      camera
-    );
-    outlinePass.selectedObjects = [...earthGroup.children];
-    outlinePass.edgeStrength = 5;
-    outlinePass.edgeGlow = 2;
-    outlinePass.pulsePeriod = 5;
+    gui.add(customShaderPass.uniforms.uColor.value, "x", -1, 1, 0.01);
+    gui.add(customShaderPass.uniforms.uColor.value, "y", -1, 1, 0.01);
+    gui.add(customShaderPass.uniforms.uColor.value, "z", -1, 1, 0.01);
 
-    effectComposer.addPass(outlinePass);
+    effectComposer.addPass(customShaderPass);
+    effectComposer.addPass(shaderPass);
 
     const sMAAPass = new SMAAPass();
     effectComposer.addPass(sMAAPass);
