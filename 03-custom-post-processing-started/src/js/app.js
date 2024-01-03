@@ -9,6 +9,8 @@ import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass";
 import dat from "dat.gui";
+import vertexShader from "../shaders/vertex.glsl";
+import fragmentShader from "../shaders/fragment.glsl";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
@@ -104,35 +106,8 @@ export default function () {
         uAlpah: { value: 0.5 },
         tDiffuse: { value: null },
       },
-      vertexShader: `
-      varying vec2 vPosition;
-      varying vec2 vUv;
-
-      void main() {
-        gl_Position = vec4(position.x, position.y, 0.0, 1.0);
-        vPosition = position.xy;
-        vUv = uv;
-      }
-      `,
-      fragmentShader: `
-      uniform float uBrightness;
-      uniform vec2 uPosition;
-      uniform vec3 uColor;
-      uniform float uAlpah;
-      uniform sampler2D tDiffuse;
-
-      varying vec2 vPosition;
-      varying vec2 vUv;
-
-      void main() {
-        vec2 newUV = vec2(vUv.x, vUv.y);
-        vec4 tex = texture2D(tDiffuse, newUV);    
-        tex.rgb += uColor;
-        float brightness = sin(uBrightness + vUv.x);
-
-        gl_FragColor = tex / brightness;
-      }
-      `,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
     });
 
     gui.add(customShaderPass.uniforms.uColor.value, "x", -1, 1, 0.01);
