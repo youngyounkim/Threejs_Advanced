@@ -1,14 +1,34 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { convertLatingTopPos, getGradientCanvas } from "./utils";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass";
+import { GammaCorrectionShader } from "three/examples/jsm/shaders/GammaCorrectionShader";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass";
+import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass";
+import { HalftonePass } from "three/examples/jsm/postprocessing/HalftonePass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 
 export default function () {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
   });
 
+  const canvasSize = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+
   renderer.outputEncoding = THREE.sRGBEncoding;
 
+  const renderTarget = new THREE.WebGLRenderTarget(
+    canvasSize.width,
+    canvasSize.height
+  );
+
+  const effectComposer = new EffectComposer(renderer);
   const textureLoader = new THREE.TextureLoader();
   const cubeTextureLoader = new THREE.CubeTextureLoader().setPath(
     "assets/environments/"
@@ -28,11 +48,6 @@ export default function () {
   const container = document.querySelector("#container");
 
   container.appendChild(renderer.domElement);
-
-  const canvasSize = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
 
   const scene = new THREE.Scene();
 
@@ -57,6 +72,40 @@ export default function () {
     light.position.set(0.65, 2.13, 1.02);
 
     scene.add(light);
+  };
+
+  const addPostEffects = () => {
+    const renderPass = new RenderPass(scene, camera);
+    effectComposer.addPass(renderPass);
+
+    const filmPass = new FilmPass(1, 1, 4096, false);
+    // effectComposer.addPass(filmPass);
+
+    const glitchPass = new GlitchPass();
+    // effectComposer.addPass(glitchPass);
+
+    const afterimagePass = new AfterimagePass(0.96);
+    // effectComposer.addPass(afterimagePass);
+
+    const unrealBloomPass = new UnrealBloomPass(
+      new THREE.Vector2(canvasSize.width, canvasSize.height)
+    );
+
+    // unrealBloomPass.strength = 1;
+    // unrealBloomPass.threshold = 0.2;
+    // unrealBloomPass.radius = 1;
+    // effectComposer.addPass(unrealBloomPass);
+
+    const shaderPass = new ShaderPass(GammaCorrectionShader);
+    effectComposer.addPass(shaderPass);
+
+    const halftonePass = new HalftonePass(canvasSize.width, canvasSize.height, {
+      radius: 10,
+      shape: 1,
+      scatter: 0,
+      blending: 1,
+    });
+    // effectComposer.addPass(halftonePass);
   };
 
   const createEarth1 = () => {
@@ -209,12 +258,13 @@ export default function () {
   const resize = () => {
     canvasSize.width = window.innerWidth;
     canvasSize.height = window.innerHeight;
-
     camera.aspect = canvasSize.width / canvasSize.height;
     camera.updateProjectionMatrix();
 
     renderer.setSize(canvasSize.width, canvasSize.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    effectComposer.setSize(canvasSize.width, canvasSize.height);
   };
 
   const addEvent = () => {
@@ -231,18 +281,21 @@ export default function () {
     star.rotation.y += 0.001;
 
     controls.update();
-    renderer.render(scene, camera);
+    effectComposer.render();
+    // renderer.render(scene, camera);
     requestAnimationFrame(() => {
       draw(obj);
     });
   };
 
   const initialize = () => {
-    addLight();
     const obj = create();
+
+    addLight();
     addEvent();
     resize();
     draw(obj);
+    addPostEffects();
   };
 
   initialize();
