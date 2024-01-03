@@ -98,6 +98,8 @@ export default function () {
 
     const customShaderPass = new ShaderPass({
       uniforms: {
+        uPosition: { value: new THREE.Vector2(0, 0) },
+        uBrightness: { value: 1 },
         uColor: { value: new THREE.Vector3(0, 0, 0.3) },
         uAlpah: { value: 0.5 },
         tDiffuse: { value: null },
@@ -113,6 +115,8 @@ export default function () {
       }
       `,
       fragmentShader: `
+      uniform float uBrightness;
+      uniform vec2 uPosition;
       uniform vec3 uColor;
       uniform float uAlpah;
       uniform sampler2D tDiffuse;
@@ -121,10 +125,12 @@ export default function () {
       varying vec2 vUv;
 
       void main() {
-        vec4 tex = texture2D(tDiffuse, vUv);    
+        vec2 newUV = vec2(vUv.x, vUv.y);
+        vec4 tex = texture2D(tDiffuse, newUV);    
         tex.rgb += uColor;
+        float brightness = sin(uBrightness + vUv.x);
 
-        gl_FragColor = tex;
+        gl_FragColor = tex / brightness;
       }
       `,
     });
@@ -132,6 +138,9 @@ export default function () {
     gui.add(customShaderPass.uniforms.uColor.value, "x", -1, 1, 0.01);
     gui.add(customShaderPass.uniforms.uColor.value, "y", -1, 1, 0.01);
     gui.add(customShaderPass.uniforms.uColor.value, "z", -1, 1, 0.01);
+    gui.add(customShaderPass.uniforms.uPosition.value, "x", -1, 1, 0.01);
+    gui.add(customShaderPass.uniforms.uPosition.value, "y", -1, 1, 0.01);
+    gui.add(customShaderPass.uniforms.uBrightness, "value", 0, 1, 0.01);
 
     effectComposer.addPass(customShaderPass);
     effectComposer.addPass(shaderPass);
