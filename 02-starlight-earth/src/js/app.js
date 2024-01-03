@@ -25,10 +25,11 @@ export default function () {
 
   const renderTarget = new THREE.WebGLRenderTarget(
     canvasSize.width,
-    canvasSize.height
+    canvasSize.height,
+    { samples: 2 }
   );
 
-  const effectComposer = new EffectComposer(renderer);
+  const effectComposer = new EffectComposer(renderer, renderTarget);
   const textureLoader = new THREE.TextureLoader();
   const cubeTextureLoader = new THREE.CubeTextureLoader().setPath(
     "assets/environments/"
